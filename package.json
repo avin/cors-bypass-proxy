@@ -1,0 +1,13 @@
+{
+  "name": "cors-bypass-proxy",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "Avin Lambrero <avin.github@gmail.com> (https://github.com/avin/)",
+  "license": "ISC"
+}
