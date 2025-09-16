@@ -5,6 +5,22 @@ import { pipeline } from 'node:stream';
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
+// Optional allowlist for target hosts via env: CBP_ALLOWED_HOSTS
+// Comma-separated list; supports '*' wildcards (e.g., "example.com,*.example.org")
+const ALLOWED_HOSTS = (process.env.CBP_ALLOWED_HOSTS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function wildcardToRegex(pattern) {
+  const escaped = pattern
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*');
+  return new RegExp(`^${escaped}$`, 'i');
+}
+
+const ALLOWED_HOSTS_REGEX = ALLOWED_HOSTS.map(wildcardToRegex);
+
 // Do not forward hop-by-hop headers (RFC 7230)
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -52,6 +68,18 @@ function buildTargetUrl(reqUrl) {
 
   if (!['http:', 'https:'].includes(targetUrl.protocol)) {
     return { error: 'Unsupported __cbp-target protocol. Use http or https.' };
+  }
+
+  // Enforce optional host allowlist if configured
+  if (ALLOWED_HOSTS_REGEX.length > 0) {
+    const host = targetUrl.hostname;
+    const allowed = ALLOWED_HOSTS_REGEX.some((rx) => rx.test(host));
+    if (!allowed) {
+      return {
+        error: 'Target host is not allowed by server configuration',
+        details: `host: ${host}; allowed: ${ALLOWED_HOSTS.join(', ')}`,
+      };
+    }
   }
   return { url: targetUrl };
 }

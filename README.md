@@ -6,6 +6,16 @@ A proxy to bypass CORS in the browser.
 - `npm start`
 - Default port: `8080` (override with `PORT`)
 
+### Environment Variables:
+- `PORT`: Port for the HTTP server inside the container/process. Default `8080`.
+- `CBP_ALLOWED_HOSTS`: Optional allowlist for target hosts. Comma-separated list supporting `*` wildcards.
+  - Matching is case-insensitive against the target URL hostname (without port).
+  - Patterns are simple globs where `*` matches any sequence of characters.
+  - Examples:
+    - `CBP_ALLOWED_HOSTS=example.com,*.example.org`
+    - `CBP_ALLOWED_HOSTS=api.internal.local,*.svc.cluster.local`
+  - Note: `*.example.com` does not match `example.com` itself. Include both if needed.
+
 ### Request:
 - `http://<host>:<port>/?__cbp-target=<urlencoded destination http/https URL>`
 
@@ -29,3 +39,6 @@ Browser:
 const t = encodeURIComponent('https://httpbin.org/get?a=1');
 fetch(`http://localhost:8080/?__cbp-target=${t}`).then(r => r.json());
 ```
+
+### Security Notes:
+- When `CBP_ALLOWED_HOSTS` is set, requests to targets whose hostname does not match the allowlist are rejected with an error.
