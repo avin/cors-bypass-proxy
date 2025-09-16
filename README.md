@@ -15,6 +15,10 @@ A proxy to bypass CORS in the browser.
     - `CBP_ALLOWED_HOSTS=example.com,*.example.org`
     - `CBP_ALLOWED_HOSTS=api.internal.local,*.svc.cluster.local`
   - Note: `*.example.com` does not match `example.com` itself. Include both if needed.
+- `CBP_UPSTREAM_TIMEOUT_MS`: Optional inactivity timeout for the upstream request (client → target).
+  - If the target doesn’t send any data for this many milliseconds, the request is aborted.
+  - Default: `0` (disabled, no inactivity timeout).
+  - Example: `CBP_UPSTREAM_TIMEOUT_MS=120000` for 2 minutes.
 
 ### Request:
 - `http://<host>:<port>/?__cbp-target=<urlencoded destination http/https URL>`
@@ -42,3 +46,4 @@ fetch(`http://localhost:8080/?__cbp-target=${t}`).then(r => r.json());
 
 ### Security Notes:
 - When `CBP_ALLOWED_HOSTS` is set, requests to targets whose hostname does not match the allowlist are rejected with an error.
+- Long-polling or delayed responses: if you saw ~5–6s timeouts before, set `CBP_UPSTREAM_TIMEOUT_MS` (or leave it at `0`) to allow longer waits.

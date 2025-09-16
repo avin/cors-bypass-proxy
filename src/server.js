@@ -4,6 +4,9 @@ import { URL } from 'node:url';
 import { pipeline } from 'node:stream';
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
+const UPSTREAM_TIMEOUT_MS = process.env.CBP_UPSTREAM_TIMEOUT_MS
+  ? Number(process.env.CBP_UPSTREAM_TIMEOUT_MS)
+  : 0; // 0 = disabled (no inactivity timeout)
 
 // Optional allowlist for target hosts via env: CBP_ALLOWED_HOSTS
 // Comma-separated list; supports '*' wildcards (e.g., "example.com,*.example.org")
@@ -160,6 +163,13 @@ const server = http.createServer((req, res) => {
       }
     });
   });
+
+  // Configure upstream inactivity timeout (disabled by default)
+  if (Number.isFinite(UPSTREAM_TIMEOUT_MS) && UPSTREAM_TIMEOUT_MS > 0) {
+    proxy.setTimeout(UPSTREAM_TIMEOUT_MS);
+  } else {
+    proxy.setTimeout(0);
+  }
 
   proxy.on('timeout', () => {
     proxy.destroy(new Error('Upstream request timeout'));
